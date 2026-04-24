@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-[#1E293B] font-Sans antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primaryHover text-white px-6 py-2.5 rounded-full font-medium transition-all shadow-btn hover:shadow-lg hover:-translate-y-0.5;
+  }
+  
+  .btn-outline {
+    @apply bg-white border border-gray-200 hover:border-gray-300 text-[#1E293B] px-6 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow flex items-center gap-2;
+  }
+
+  .stat-card {
+    @apply bg-white rounded-2xl shadow-soft p-5 border border-gray-100 flex items-center gap-4;
+  }
+}
