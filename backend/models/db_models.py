@@ -63,10 +63,11 @@ class Listing(Base):
     kwh          = Column(Float, nullable=False)
     price_inr    = Column(Float, nullable=False)       # ₹ total
     price_per_kwh= Column(Float, nullable=False)
-    token_id     = Column(String, nullable=True)       # on-chain token ID once minted
-    status       = Column(String, default="active")    # active | sold | cancelled
-    tx_hash      = Column(String, nullable=True)
-    created_at   = Column(DateTime, server_default=func.now())
+    token_id         = Column(String, nullable=True)    # on-chain ERC-1155 token ID
+    chain_listing_id = Column(Integer, nullable=True)   # on-chain marketplace listing ID
+    status           = Column(String, default="active") # active | sold | cancelled
+    tx_hash          = Column(String, nullable=True)
+    created_at       = Column(DateTime, server_default=func.now())
 
     producer = relationship("User", back_populates="listings")
     trade    = relationship("Trade", back_populates="listing", uselist=False)

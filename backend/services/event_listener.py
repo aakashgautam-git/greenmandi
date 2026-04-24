@@ -1,6 +1,6 @@
 """
 services/event_listener.py
-Listens to TradeExecuted events on the EnergyMarketplace contract.
+Listens to TokenPurchased events on the EnergyMarketplace contract.
 When an event fires, builds a signed proof object and stores it in DB.
 Falls back to polling pending trades when no contract is available.
 """
@@ -120,9 +120,9 @@ async def _on_chain_loop():
         await _simulation_loop()
         return
 
-    logger.info("Event listener: watching TradeExecuted on-chain events.")
+    logger.info("Event listener: watching TokenPurchased on-chain events.")
     try:
-        event_filter = await contract.events.TradeExecuted.create_filter(fromBlock="latest")
+        event_filter = await contract.events.TokenPurchased.create_filter(fromBlock="latest")
     except Exception:
         logger.warning("Could not create on-chain event filter — falling back to simulation.")
         await _simulation_loop()
@@ -136,14 +136,26 @@ async def _on_chain_loop():
                 tx_hash = evt["transactionHash"].hex()
 
                 async with AsyncSessionLocal() as db:
-                    # Match trade by listing/token
-                    result = await db.execute(
-                        select(Trade).where(Trade.status == "pending").limit(1)
-                    )
-                    trade = result.scalar_one_or_none()
-                    if trade:
-                        trade.tx_hash = tx_hash
-                        await _finalize_trade(db, trade)
+                    # Match trade by chain_listing_id
+                    chain_listing_id = args.get("listingId")
+                    
+                    if chain_listing_id is not None:
+                        # Find the Listing associated with this chain_listing_id
+                        from models.db_models import Listing
+                        lst_res = await db.execute(
+                            select(Listing).where(Listing.chain_listing_id == chain_listing_id)
+                        )
+                        listing = lst_res.scalar_one_or_none()
+                        
+                        if listing:
+                            # Find the pending Trade for this listing
+                            result = await db.execute(
+                                select(Trade).where(Trade.listing_id == listing.id, Trade.status == "pending")
+                            )
+                            trade = result.scalar_one_or_none()
+                            if trade:
+                                trade.tx_hash = tx_hash
+                                await _finalize_trade(db, trade)
         except Exception as exc:
             logger.error(f"On-chain event error: {exc}")
 

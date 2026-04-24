@@ -8,12 +8,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+import logging
 
 from config.db import get_db
+from config.contracts import get_energy_marketplace
 from middleware.auth import get_current_user
 from models.db_models import Listing, Proof, Trade, User, Wallet
 from models.schemas import ProofOut, PurchaseRequest, PurchaseResponse, TradeOut
+from services.wallet_manager import load_wallet, ensure_funded, sign_and_send
+from config.provider import w3
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -80,6 +85,43 @@ async def purchase_listing(
         status="pending",
     )
     db.add(trade)
+    
+    # 2. Blockchain integration: Buy token on marketplace
+    marketplace_contract = get_energy_marketplace()
+    if marketplace_contract and listing.chain_listing_id is not None:
+        try:
+            # Load buyer's custodial wallet
+            buyer_wallet = await load_wallet(buyer_id, db)
+            
+            # The price we listed with was int(price_inr * 10**16) or 10**15
+            price_wei = int(listing.price_inr * 10**16)
+            if price_wei == 0:
+                price_wei = 10**15
+                
+            # Ensure wallet has enough MATIC for price + gas
+            await ensure_funded(buyer_wallet.address, min_balance_wei=price_wei + 15_000_000_000_000_000)
+            
+            gas_price = await w3.eth.gas_price
+            nonce = await w3.eth.get_transaction_count(buyer_wallet.address)
+            
+            buy_tx = await marketplace_contract.functions.buyToken(
+                listing.chain_listing_id
+            ).build_transaction({
+                "from": buyer_wallet.address,
+                "nonce": nonce,
+                "value": price_wei,
+                "gasPrice": gas_price,
+                "gas": 300_000,
+            })
+            
+            tx_hash_hex = await sign_and_send(buy_tx, buyer_wallet)
+            logger.info(f"Initiated on-chain purchase: tx={tx_hash_hex}")
+            trade.tx_hash = tx_hash_hex
+            
+        except Exception as e:
+            logger.error(f"Error purchasing token on-chain: {e}", exc_info=True)
+            # In a robust app, we'd roll back the trade/listing, but for now we let it fail or log it.
+
     await db.commit()
     await db.refresh(trade)
 

@@ -1,9 +1,8 @@
 """
 services/oracle.py
-Simulates a smart meter oracle:
-  - Polls for pending MintRequests every 15 s
-  - Calls confirmMint() on the EnergyToken contract via the oracle wallet
-  - Updates the MintRequest status in DB
+Polls for pending MintRequests every 15 s.
+Calls confirmMint() on the EnergyToken contract via the oracle wallet.
+Updates the MintRequest status + token_id in DB.
 """
 import logging
 from datetime import datetime, timezone
@@ -15,7 +14,7 @@ from sqlalchemy import select
 from config.db import AsyncSessionLocal
 from config.provider import w3
 from config.settings import settings
-from models.db_models import MintRequest
+from models.db_models import MintRequest, Wallet
 
 logger = logging.getLogger(__name__)
 
@@ -44,35 +43,62 @@ async def _process_pending_mints():
                     req.token_id = f"sim-token-{req.id[:8]}"
                     req.tx_hash = f"0x{'0' * 64}"
                     logger.info(f"[SIM] Mint confirmed for request {req.id} ({req.kwh} kWh)")
+                    await db.commit()
+                    continue
+
+                # --- Look up the producer's on-chain wallet address ---
+                wallet_res = await db.execute(
+                    select(Wallet).where(Wallet.user_id == req.user_id)
+                )
+                wallet = wallet_res.scalar_one_or_none()
+                if not wallet:
+                    logger.error(f"No wallet for user {req.user_id} — skipping mint {req.id}")
+                    req.status = "failed"
+                    await db.commit()
+                    continue
+
+                producer_address = w3.to_checksum_address(wallet.address)
+                amount_wh = int(req.kwh * 1000)  # kWh → Wh (uint, no decimals)
+
+                from eth_account import Account
+                oracle_account = Account.from_key(settings.private_key)
+                nonce = await w3.eth.get_transaction_count(oracle_account.address)
+                gas_price = await w3.eth.gas_price
+
+                tx = await contract.functions.confirmMint(
+                    producer_address,
+                    amount_wh,
+                ).build_transaction({
+                    "from":     oracle_account.address,
+                    "nonce":    nonce,
+                    "gasPrice": gas_price,
+                    "gas":      250_000,
+                })
+                signed = oracle_account.sign_transaction(tx)
+                # web3.py v6 uses .raw_transaction (not .rawTransaction)
+                tx_hash = await w3.eth.send_raw_transaction(signed.raw_transaction)
+                receipt = await w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+
+                req.tx_hash = tx_hash.hex()
+
+                if receipt.status == 1:
+                    # Parse the MintConfirmed event to get the actual on-chain tokenId
+                    events = contract.events.MintConfirmed().process_receipt(receipt)
+                    token_id = str(events[0]["args"]["tokenId"]) if events else ""
+                    req.status = "confirmed"
+                    req.token_id = token_id
+                    logger.info(
+                        f"✅ Mint confirmed — tx={tx_hash.hex()} tokenId={token_id} "
+                        f"producer={producer_address} kWh={req.kwh}"
+                    )
                 else:
-                    from eth_account import Account
-                    oracle_account = Account.from_key(settings.private_key)
-                    nonce = await w3.eth.get_transaction_count(oracle_account.address)
-                    gas_price = await w3.eth.gas_price
-
-                    # Build confirmMint transaction
-                    tx = await contract.functions.confirmMint(
-                        req.user_id,        # adjust to match actual contract signature
-                        int(req.kwh * 1000) # kWh × 1000 = Wh as uint
-                    ).build_transaction({
-                        "from":     oracle_account.address,
-                        "nonce":    nonce,
-                        "gasPrice": gas_price,
-                        "gas":      200_000,
-                    })
-                    signed = oracle_account.sign_transaction(tx)
-                    tx_hash = await w3.eth.send_raw_transaction(signed.rawTransaction)
-                    receipt = await w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
-
-                    req.status   = "confirmed" if receipt.status == 1 else "failed"
-                    req.tx_hash  = tx_hash.hex()
-                    req.token_id = str(receipt.get("tokenId", ""))
-                    logger.info(f"Mint tx {tx_hash.hex()} → status={req.status}")
+                    req.status = "failed"
+                    logger.warning(f"❌ Mint tx reverted — {tx_hash.hex()}")
 
                 await db.commit()
 
             except Exception as exc:
-                logger.error(f"Oracle error for mint request {req.id}: {exc}")
+                logger.error(f"Oracle error for mint request {req.id}: {exc}", exc_info=True)
                 req.status = "failed"
                 await db.commit()
 

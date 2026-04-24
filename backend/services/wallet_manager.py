@@ -1,13 +1,11 @@
 """
 services/wallet_manager.py
 Custodial wallet create/load/sign using eth_account (web3.py ecosystem).
-Private keys are stored AES-encrypted in the DB for demo purposes.
+Private keys are stored XOR-obfuscated in the DB for demo purposes.
 In production, use a KMS (AWS KMS / HashiCorp Vault).
 """
 import hashlib
-import json
 import logging
-import os
 
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
@@ -65,8 +63,40 @@ async def load_wallet(user_id: str, db: AsyncSession) -> LocalAccount:
 
 
 async def sign_and_send(tx: dict, signer: LocalAccount) -> str:
-    """Sign a transaction dict and broadcast it. Returns tx hash."""
+    """Sign a transaction dict and broadcast it. Returns tx hash hex."""
     from config.provider import w3
     signed = signer.sign_transaction(tx)
-    tx_hash = await w3.eth.send_raw_transaction(signed.rawTransaction)
+    tx_hash = await w3.eth.send_raw_transaction(signed.raw_transaction)
     return tx_hash.hex()
+
+
+async def ensure_funded(address: str, min_balance_wei: int = 15_000_000_000_000_000) -> None:
+    """
+    Ensure a custodial wallet has at least `min_balance_wei` MATIC for gas.
+    Default threshold: 0.015 MATIC. If below, oracle wallet tops it up to 0.02 MATIC.
+    This is a convenience helper for the Amoy testnet demo.
+    """
+    from config.provider import w3
+    checksum_addr = w3.to_checksum_address(address)
+    balance = await w3.eth.get_balance(checksum_addr)
+
+    if balance >= min_balance_wei:
+        return  # Already funded, nothing to do
+
+    top_up_amount = 20_000_000_000_000_000  # 0.02 MATIC in wei
+    oracle_account = Account.from_key(settings.private_key)
+    nonce = await w3.eth.get_transaction_count(oracle_account.address)
+    gas_price = await w3.eth.gas_price
+
+    tx = {
+        "nonce":    nonce,
+        "to":       checksum_addr,
+        "value":    top_up_amount,
+        "gas":      21_000,
+        "gasPrice": gas_price,
+        "chainId":  80002,  # Polygon Amoy
+    }
+    signed = oracle_account.sign_transaction(tx)
+    tx_hash = await w3.eth.send_raw_transaction(signed.raw_transaction)
+    await w3.eth.wait_for_transaction_receipt(tx_hash, timeout=60)
+    logger.info(f"💰 Funded {address} with 0.02 MATIC from oracle (tx={tx_hash.hex()})")
