@@ -5,6 +5,7 @@ import AuthPage from './pages/AuthPage';
 import SellerDashboard from './pages/SellerDashboard';
 import BuyerDashboard from './pages/BuyerDashboard';
 import TodaysChange from './pages/TodaysChange';
+import TransactionDemo from './pages/TransactionDemo';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './pages/AuthPage.css';
 
@@ -39,6 +40,7 @@ function AppRoutes() {
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthGuard />} />
             <Route path="/todays-change" element={<TodaysChange />} />
+            <Route path="/transaction-demo" element={<TransactionDemo />} />
             <Route
               path="/dashboard"
               element={
