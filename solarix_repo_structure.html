@@ -1,0 +1,124 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:1rem 0;font-family:var(--font-mono);font-size:13px;color:var(--color-text-primary)}
+.tree{line-height:1.9}
+.row{display:flex;align-items:baseline;gap:6px;padding:1px 0;cursor:default}
+.row:hover{background:var(--color-background-secondary);border-radius:4px}
+.indent{color:var(--color-border-secondary);user-select:none;white-space:pre}
+.dir{color:var(--color-text-primary);font-weight:500}
+.file{color:var(--color-text-secondary)}
+.badge{font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--font-sans);font-weight:500;white-space:nowrap}
+.b-contract{background:var(--color-background-warning);color:var(--color-text-warning)}
+.b-backend{background:var(--color-background-info);color:var(--color-text-info)}
+.b-frontend{background:var(--color-background-success);color:var(--color-text-success)}
+.b-shared{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.b-config{background:var(--color-background-danger);color:var(--color-text-danger)}
+.comment{color:var(--color-text-tertiary);font-family:var(--font-sans);font-size:11px;margin-left:4px}
+.section-label{font-family:var(--font-sans);font-size:11px;font-weight:500;color:var(--color-text-tertiary);margin:10px 0 2px;text-transform:uppercase;letter-spacing:.06em}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--color-border-tertiary)}
+</style>
+<div class="wrap">
+<div class="legend">
+  <span class="badge b-contract">contracts</span>
+  <span class="badge b-backend">backend</span>
+  <span class="badge b-frontend">frontend</span>
+  <span class="badge b-shared">shared/config</span>
+  <span class="badge b-config">root config</span>
+</div>
+<div class="tree">
+
+<div class="section-label">root</div>
+<div class="row"><span class="indent"></span><span class="dir">solarix/</span><span class="badge b-config">monorepo root</span></div>
+<div class="row"><span class="indent">  </span><span class="file">.env.example</span><span class="comment">— all env vars documented here</span></div>
+<div class="row"><span class="indent">  </span><span class="file">.gitignore</span></div>
+<div class="row"><span class="indent">  </span><span class="file">package.json</span><span class="comment">— root scripts: dev, deploy, test</span></div>
+<div class="row"><span class="indent">  </span><span class="file">README.md</span></div>
+
+<div class="section-label" style="margin-top:14px">smart contracts</div>
+<div class="row"><span class="indent">  </span><span class="dir">contracts/</span><span class="badge b-contract">hardhat + solidity</span></div>
+<div class="row"><span class="indent">    </span><span class="file">hardhat.config.js</span><span class="comment">— polygon amoy testnet config</span></div>
+<div class="row"><span class="indent">    </span><span class="file">package.json</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">contracts/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">EnergyToken.sol</span><span class="comment">— ERC-20, mintPending + confirmMint</span></div>
+<div class="row"><span class="indent">      </span><span class="file">EnergyMarketplace.sol</span><span class="comment">— createListing, purchaseListing, escrow</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">scripts/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">deploy.js</span><span class="comment">— deploys both contracts, saves addresses</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">test/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">EnergyToken.test.js</span></div>
+<div class="row"><span class="indent">      </span><span class="file">EnergyMarketplace.test.js</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">artifacts/</span><span class="comment">— auto-generated ABIs after compile (gitignored)</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">deployments/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">amoy.json</span><span class="comment">— deployed contract addresses</span></div>
+
+<div class="section-label" style="margin-top:14px">backend</div>
+<div class="row"><span class="indent">  </span><span class="dir">backend/</span><span class="badge b-backend">node.js + express</span></div>
+<div class="row"><span class="indent">    </span><span class="file">package.json</span></div>
+<div class="row"><span class="indent">    </span><span class="file">index.js</span><span class="comment">— express app entry, mounts all routes</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">config/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">contracts.js</span><span class="comment">— loads ABIs + addresses from deployments/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">db.js</span><span class="comment">— sqlite/postgres connection</span></div>
+<div class="row"><span class="indent">      </span><span class="file">provider.js</span><span class="comment">— ethers provider → polygon amoy</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">routes/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">auth.js</span><span class="comment">— POST /auth/otp/send, POST /auth/otp/verify</span></div>
+<div class="row"><span class="indent">      </span><span class="file">mint.js</span><span class="comment">— POST /mint (triggers oracle pending)</span></div>
+<div class="row"><span class="indent">      </span><span class="file">listings.js</span><span class="comment">— GET /listings, POST /listings</span></div>
+<div class="row"><span class="indent">      </span><span class="file">trades.js</span><span class="comment">— GET /trades/:address, GET /proof/:tradeId</span></div>
+<div class="row"><span class="indent">      </span><span class="file">price.js</span><span class="comment">— GET /price/current</span></div>
+<div class="row"><span class="indent">      </span><span class="file">discom.js</span><span class="comment">— GET /discom/trades, GET /discom/proofs</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">services/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">oracle.js</span><span class="comment">— simulates smart meter → calls confirmMint()</span></div>
+<div class="row"><span class="indent">      </span><span class="file">eventListener.js</span><span class="comment">— listens TradeExecuted, builds proof object</span></div>
+<div class="row"><span class="indent">      </span><span class="file">pricingEngine.js</span><span class="comment">— solar curve + demand index → ₹/kWh</span></div>
+<div class="row"><span class="indent">      </span><span class="file">walletManager.js</span><span class="comment">— custodial wallet create/load/sign</span></div>
+<div class="row"><span class="indent">      </span><span class="file">nasaApi.js</span><span class="comment">— fetches irradiance data for Bangalore</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">middleware/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">auth.js</span><span class="comment">— session/JWT verification on protected routes</span></div>
+<div class="row"><span class="indent">      </span><span class="file">errorHandler.js</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">db/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">schema.sql</span><span class="comment">— users, wallets, trades, proofs tables</span></div>
+<div class="row"><span class="indent">      </span><span class="file">migrations/</span></div>
+
+<div class="section-label" style="margin-top:14px">frontend</div>
+<div class="row"><span class="indent">  </span><span class="dir">frontend/</span><span class="badge b-frontend">react + wagmi + tailwind</span></div>
+<div class="row"><span class="indent">    </span><span class="file">package.json</span></div>
+<div class="row"><span class="indent">    </span><span class="file">vite.config.js</span></div>
+<div class="row"><span class="indent">    </span><span class="file">tailwind.config.js</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">public/</span></div>
+<div class="row"><span class="indent">    </span><span class="dir">src/</span></div>
+<div class="row"><span class="indent">      </span><span class="file">main.jsx</span><span class="comment">— wagmi + rainbowkit providers</span></div>
+<div class="row"><span class="indent">      </span><span class="file">App.jsx</span><span class="comment">— router: /producer, /consumer, /discom</span></div>
+<div class="row"><span class="indent">      </span><span class="dir">pages/</span></div>
+<div class="row"><span class="indent">        </span><span class="file">Login.jsx</span><span class="comment">— phone + OTP entry</span></div>
+<div class="row"><span class="indent">        </span><span class="file">ProducerDashboard.jsx</span><span class="comment">— solar chart, token balance, earnings</span></div>
+<div class="row"><span class="indent">        </span><span class="file">ConsumerMarketplace.jsx</span><span class="comment">— listings browse + buy flow</span></div>
+<div class="row"><span class="indent">        </span><span class="file">DiscomDashboard.jsx</span><span class="comment">— read-only trade + proof view</span></div>
+<div class="row"><span class="indent">      </span><span class="dir">components/</span></div>
+<div class="row"><span class="indent">        </span><span class="dir">producer/</span></div>
+<div class="row"><span class="indent">          </span><span class="file">SolarOutputChart.jsx</span><span class="comment">— sine + noise kWh chart</span></div>
+<div class="row"><span class="indent">          </span><span class="file">MintTokenForm.jsx</span><span class="comment">— surplus claim → POST /mint</span></div>
+<div class="row"><span class="indent">          </span><span class="file">CreateListingForm.jsx</span></div>
+<div class="row"><span class="indent">          </span><span class="file">TradeHistory.jsx</span></div>
+<div class="row"><span class="indent">        </span><span class="dir">consumer/</span></div>
+<div class="row"><span class="indent">          </span><span class="file">ListingCard.jsx</span><span class="comment">— price, kWh, seller, buy button</span></div>
+<div class="row"><span class="indent">          </span><span class="file">UpiPaymentModal.jsx</span><span class="comment">— mock UPI success screen</span></div>
+<div class="row"><span class="indent">          </span><span class="file">TradeReceipt.jsx</span><span class="comment">— token transfer + polygonscan link</span></div>
+<div class="row"><span class="indent">        </span><span class="dir">shared/</span></div>
+<div class="row"><span class="indent">          </span><span class="file">TokenStatusBadge.jsx</span><span class="comment">— pending / confirmed / failed</span></div>
+<div class="row"><span class="indent">          </span><span class="file">ProofViewer.jsx</span><span class="comment">— signed JSON proof display</span></div>
+<div class="row"><span class="indent">          </span><span class="file">PriceTicker.jsx</span><span class="comment">— live ₹/kWh from GET /price/current</span></div>
+<div class="row"><span class="indent">          </span><span class="file">PolygonscanLink.jsx</span><span class="comment">— tx hash → amoy explorer link</span></div>
+<div class="row"><span class="indent">      </span><span class="dir">hooks/</span></div>
+<div class="row"><span class="indent">        </span><span class="file">useAuth.js</span><span class="comment">— OTP flow, session state</span></div>
+<div class="row"><span class="indent">        </span><span class="file">useListings.js</span><span class="comment">— fetch + poll active listings</span></div>
+<div class="row"><span class="indent">        </span><span class="file">useMint.js</span><span class="comment">— mint flow + pending state</span></div>
+<div class="row"><span class="indent">        </span><span class="file">usePrice.js</span><span class="comment">— poll /price/current every 30s</span></div>
+<div class="row"><span class="indent">        </span><span class="file">useTrades.js</span><span class="comment">— trade history for current user</span></div>
+<div class="row"><span class="indent">      </span><span class="dir">lib/</span></div>
+<div class="row"><span class="indent">        </span><span class="file">api.js</span><span class="comment">— axios instance → backend base URL</span></div>
+<div class="row"><span class="indent">        </span><span class="file">wagmiConfig.js</span><span class="comment">— rainbowkit + polygon amoy chain</span></div>
+<div class="row"><span class="indent">        </span><span class="file">contracts.js</span><span class="comment">— ABI imports + contract addresses</span></div>
+<div class="row"><span class="indent">      </span><span class="dir">context/</span></div>
+<div class="row"><span class="indent">        </span><span class="file">AuthContext.jsx</span><span class="comment">— user session, wallet address, role</span></div>
+
+</div>
+</div>
