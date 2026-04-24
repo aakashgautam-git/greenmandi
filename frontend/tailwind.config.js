@@ -15,6 +15,12 @@ export default {
         primaryHover: '#00B248',
         surface: '#FFFFFF',
         background: '#FAFBFD',
+        seller: '#F59E0B',
+        sellerHover: '#D97706',
+        sellerLight: '#FEF3C7',
+        buyer: '#0EA5E9',
+        buyerHover: '#0284C7',
+        buyerLight: '#E0F2FE',
       },
       boxShadow: {
         'soft': '0 20px 40px rgba(0, 0, 0, 0.04)',

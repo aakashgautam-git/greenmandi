@@ -67,26 +67,26 @@ const Landing: React.FC = () => {
           {/* Floating CSS Tags mirroring the design */}
           <div className="absolute top-24 left-10 bg-white rounded-xl shadow-lg p-3 w-32 border border-gray-100 animate-bounce" style={{animationDuration: '4s'}}>
             <div className="text-xs text-primary font-semibold mb-1">Selling</div>
-            <div className="font-bold text-gray-800">3.8 kWh</div>
-            <div className="text-primary font-bold text-sm">$1.20 <span className="text-xs font-normal text-gray-500">/kWh</span></div>
+            <div className="font-bold text-gray-800">4 tokens</div>
+            <div className="text-primary font-bold text-sm">$1.20 <span className="text-xs font-normal text-gray-500">/token</span></div>
           </div>
 
           <div className="absolute bottom-40 left-10 bg-white rounded-xl shadow-lg p-3 w-32 border border-gray-100 animate-bounce" style={{animationDuration: '5s', animationDelay: '1s'}}>
             <div className="text-xs text-[#008CC8] font-semibold mb-1">Buying</div>
-            <div className="font-bold text-gray-800">2.6 kWh</div>
-            <div className="text-[#008CC8] font-bold text-sm">$1.45 <span className="text-xs font-normal text-gray-500">/kWh</span></div>
+            <div className="font-bold text-gray-800">3 tokens</div>
+            <div className="text-[#008CC8] font-bold text-sm">$1.45 <span className="text-xs font-normal text-gray-500">/token</span></div>
           </div>
 
           <div className="absolute top-10 right-10 bg-white rounded-xl shadow-lg p-3 w-32 border border-gray-100 animate-bounce" style={{animationDuration: '6s', animationDelay: '2s'}}>
             <div className="text-xs text-primary font-semibold mb-1">Selling</div>
-            <div className="font-bold text-gray-800">5.2 kWh</div>
-            <div className="text-primary font-bold text-sm">$1.35 <span className="text-xs font-normal text-gray-500">/kWh</span></div>
+            <div className="font-bold text-gray-800">5 tokens</div>
+            <div className="text-primary font-bold text-sm">$1.35 <span className="text-xs font-normal text-gray-500">/token</span></div>
           </div>
 
           <div className="absolute bottom-20 right-5 bg-white rounded-xl shadow-lg p-3 w-32 border border-gray-100 animate-bounce" style={{animationDuration: '4.5s', animationDelay: '0.5s'}}>
             <div className="text-xs text-[#008CC8] font-semibold mb-1">Buying</div>
-            <div className="font-bold text-gray-800">4.1 kWh</div>
-            <div className="text-[#008CC8] font-bold text-sm">$1.40 <span className="text-xs font-normal text-gray-500">/kWh</span></div>
+            <div className="font-bold text-gray-800">4 tokens</div>
+            <div className="text-[#008CC8] font-bold text-sm">$1.40 <span className="text-xs font-normal text-gray-500">/token</span></div>
           </div>
         </div>
       </div>
@@ -98,8 +98,8 @@ const Landing: React.FC = () => {
             <Zap className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <div className="text-xl font-bold text-gray-800">1.2 GWh+</div>
-            <div className="text-sm text-gray-500 font-medium">Energy Traded</div>
+            <div className="text-xl font-bold text-gray-800">120K+</div>
+            <div className="text-sm text-gray-500 font-medium">Tokens Traded</div>
           </div>
         </div>
 
